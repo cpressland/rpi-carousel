@@ -1,0 +1,4 @@
+[Desktop Entry]
+Type=Application
+Name=Slideshow
+Exec=eom -f /ram/slideshow.png

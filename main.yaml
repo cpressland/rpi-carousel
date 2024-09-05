@@ -1,0 +1,83 @@
+---
+- name: Setup Carousel
+  hosts: all
+  handlers:
+    - name: restart samba
+      systemd:
+        name: smbd.service
+        state: restarted
+        daemon_reload: yes
+    - name: restart slideshow
+      systemd:
+        name: slideshow.service
+        state: restarted
+        daemon_reload: yes
+
+  tasks:
+    - name: Set Swapsize to 1024MB
+      become: true
+      lineinfile:
+        path: /etc/dphys-swapfile
+        regexp: "^CONF_SWAPSIZE="
+        line: "CONF_SWAPSIZE=1024"
+
+    - name: Install Packages
+      become: true
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - samba
+        - vim
+
+    - name: Configure Samba
+      become: true
+      copy:
+        src: smb.conf
+        dest: /etc/samba/smb.conf
+        mode: 0644
+      notify: restart samba
+
+    - name: Add Slideshow Script
+      become: true
+      copy:
+        src: slideshow.sh
+        dest: /usr/local/bin/slideshow.sh
+        mode: 0755
+
+    - name: Add Systemd Unit for Slideshow Script
+      become: true
+      copy:
+        src: slideshow.service
+        dest: /etc/systemd/system/slideshow.service
+        mode: 0644
+      notify: restart slideshow
+
+    - name: Enable and Start Service
+      become: true
+      systemd:
+        name: slideshow.service
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: Add Images Directory
+      become: true
+      file:
+        path: /var/carousel/images
+        state: directory
+        owner: nobody
+        group: nogroup
+        mode: 0777
+
+    - name: Make Autostart Directory
+      file:
+        path: ~/.config/autostart
+        state: directory
+        mode: 0755
+
+    - name: Add Autostart Script
+      copy:
+        src: carousel.desktop
+        dest: ~/.config/autostart/carousel.desktop
+        mode: 0644

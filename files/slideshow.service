@@ -1,0 +1,8 @@
+[Unit]
+Description=Slideshow
+
+[Service]
+ExecStart=/usr/local/bin/slideshow.sh
+
+[Install]
+WantedBy=multi-user.target
